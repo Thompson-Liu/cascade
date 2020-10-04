@@ -214,28 +214,33 @@ int main(int argc, char** argv) {
             throw 1;
         }
 
-        // TODO: start session
-        FuseClientContextType fcc;
-        se = fuse_session_new(&args, &fs_ops, sizeof(fs_ops), &fcc);
-        if (se == nullptr) {
-            throw 1;
-        }
-        if (fuse_set_signal_handlers(se) != 0) {
-            throw 2;
-        }
-        if (fuse_session_mount(se, opts.mountpoint) != 0) {
-            throw 3;
-        }
-
         fuse_daemonize(opts.foreground);
-
-        if (opts.singlethread) {
-            ret = fuse_session_loop(se);
-        } else {
-            ret = fuse_session_loop_mt(se, opts.clone_fd);
+        
+        {
+            // Start session.
+            // We use a block here to make sure fcc is initialize after daemonizing.
+            FuseClientContextType fcc;
+            se = fuse_session_new(&args, &fs_ops, sizeof(fs_ops), &fcc);
+            if (se == nullptr) {
+                throw 1;
+            }
+            if (fuse_set_signal_handlers(se) != 0) {
+                throw 2;
+            }
+            if (fuse_session_mount(se, opts.mountpoint) != 0) {
+                throw 3;
+            }
+    
+    
+            if (opts.singlethread) {
+                ret = fuse_session_loop(se);
+            } else {
+                ret = fuse_session_loop_mt(se, opts.clone_fd);
+            }
+    
+            fuse_session_unmount(se);
         }
 
-        fuse_session_unmount(se);
     } catch (int& ex) {
         switch(ex) {
         case 3:
