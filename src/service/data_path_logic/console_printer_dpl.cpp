@@ -1,3 +1,4 @@
+#include <cascade/service.hpp>
 #include <cascade/data_path_logic_interface.hpp>
 #include <iostream>
 
@@ -7,6 +8,9 @@ namespace cascade{
 #define MY_PREFIX   "/console_printer"
 #define MY_UUID     "48e60f7c-8500-11eb-8755-0242ac110002"
 #define MY_DESC     "Demo DLL DPL that printing what ever received on prefix " MY_PREFIX " on console."
+
+/** DFG Descriptor, will be initialized during dpl initialization **/
+DFGDescriptor dfg_descriptor; 
 
 std::unordered_set<std::string> list_prefixes() {
     return {MY_PREFIX};
@@ -22,10 +26,15 @@ std::string get_description() {
 
 void initialize(ICascadeContext* ctxt) {
     // nothing to initialize
-    return;
+    std::ifstream input_conf(DFG_CONFIG);
+    json dfg_conf = json::parse(input_conf); 
+    dfg_descriptor = DFGDescriptor(dfg_conf);
+    dfg_descriptor.dump();
 }
 
 class ConsolePrinterOCDPO: public OffCriticalDataPathObserver {
+public:
+    
     virtual void operator () (const std::string& key_string,
                               persistent::version_t version,
                               const mutils::ByteRepresentable* const value_ptr,

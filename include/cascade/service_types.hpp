@@ -11,6 +11,7 @@
 namespace derecho {
 namespace cascade {
 
+using VolatileCascadeMetadataWithStringKey = VolatileCascadeStore<std::string,ObjectPoolMetadata,&ObjectPoolMetadata::IK,&ObjectPoolMetadata::IV>;
 // using VCSU = VolatileCascadeStore<uint64_t,ObjectWithUInt64Key,&ObjectWithUInt64Key::IK,&ObjectWithUInt64Key::IV>;
 using VolatileCascadeStoreWithStringKey = VolatileCascadeStore<std::string,ObjectWithStringKey,&ObjectWithStringKey::IK,&ObjectWithStringKey::IV>;
 // using PCSU = PersistentCascadeStore<uint64_t,ObjectWithUInt64Key,&ObjectWithUInt64Key::IK,&ObjectWithUInt64Key::IV,ST_FILE>;

@@ -33,7 +33,7 @@ class CascadeServiceCDPO: public CriticalDataPathObserver<CascadeType> {
                              const typename CascadeType::KeyType& key,
                              const typename CascadeType::ObjectType& value,
                              ICascadeContext* cascade_ctxt) {
-        if constexpr (std::is_convertible<typename CascadeType::KeyType,std::string>::value) {
+        if constexpr (std::is_convertible<typename CascadeType::KeyType,std::string>::value && !std::is_same<typename CascadeType::ObjectType,ObjectPoolMetadata>::value) {
             auto* ctxt = dynamic_cast<CascadeContext<VolatileCascadeStoreWithStringKey,PersistentCascadeStoreWithStringKey>*>(cascade_ctxt);
             size_t pos = key.rfind('/');
             std::string prefix;
@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
     auto pcss_factory = [&cdpo_pcss](persistent::PersistentRegistry* pr, derecho::subgroup_id_t, ICascadeContext* context_ptr) {
         return std::make_unique<PersistentCascadeStoreWithStringKey>(pr,&cdpo_pcss,context_ptr);
     };
+
     dbg_default_trace("starting service...");
     Service<VolatileCascadeStoreWithStringKey,PersistentCascadeStoreWithStringKey>::start(group_layout,
             {&cdpo_vcss,&cdpo_pcss},

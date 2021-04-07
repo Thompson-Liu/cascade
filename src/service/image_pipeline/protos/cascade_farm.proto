@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package cascade_frame;
+
+service FrameService {
+  rpc GetFrame (FrameInfo) returns (FrameStatus) {}
+}
+
+message FrameInfo {
+  string inputSource = 1;
+  int32 frameIdx = 2;
+}
+
+enum UploadStatusCode {
+  NotFound = 0;
+  Ok = 1;
+}
+
+message FrameStatus {
+  UploadStatusCode code = 1;
+  bytes frame_data = 2;
+}

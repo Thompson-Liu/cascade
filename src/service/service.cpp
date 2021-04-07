@@ -122,5 +122,41 @@ ResourceDescriptor::~ResourceDescriptor() {
     // destructor
 }
 
+DFGDescriptor::DFGDescriptor() : dfg_id(-1) {
+    
+}
+
+DFGDescriptor::DFGDescriptor(const json& dfg_conf) {
+    // if (!dfg_conf.is_object() || !dfg_conf[DFG_LAYOUT].is_array()) {
+    //     dbg_default_error("parse_json_subgroup_policy cannot parse {}.", dfg_conf.get<std::string>());
+    //     throw derecho::derecho_exception("parse_json_subgroup_policy cannot parse" + dfg_conf.get<std::string>());
+    // }
+    dfg_id = dfg_conf[DFG_ID];
+    num_nodes = dfg_conf[DFG_NUM_NODES];
+    nodes = std::vector<DFGDescriptor::DFGNode>();
+    for (auto node_it:dfg_conf[DFG_LAYOUT]) {
+        DFGDescriptor::DFGNode node;
+        node.object_pool_id = node_it["object_pool_id"];
+        node.dlls = node_it["logics"].get<std::vector<std::string>>();
+        node.external_inputs = node_it["external_inputs"].get<std::vector<std::string>>();
+        node.output_objpools = node_it["output_objpools"].get<std::vector<std::string>>();
+        nodes.push_back(node);
+    }
+}
+
+void DFGDescriptor::dump() const {
+    dbg_default_info("DataFlowGraph Descriptor:");
+    dbg_default_info("dfg_id: " + std::to_string(dfg_id) + ", number of nodes: " + std::to_string(num_nodes));
+    for (auto node: nodes) {
+        std::ostringstream os_dfg_node;
+        os_dfg_node << node.to_string();
+        dbg_default_info("dfg_node={}", os_dfg_node.str());
+    }
+}
+
+DFGDescriptor::~DFGDescriptor() {
+
+}
+
 }
 }

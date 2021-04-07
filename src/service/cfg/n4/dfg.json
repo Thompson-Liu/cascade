@@ -1,0 +1,18 @@
+{
+    "dfg_id": 0,
+    "num_nodes": 2,
+    "layout": [
+        {
+          "object_pool_id": "/console_printer",
+          "logics": ["libconsole_printer_dpl"] ,
+          "external_inputs": [],
+          "output_objpools": ["/image_pipeline"]
+        },
+        {
+          "object_pool_id": "/console_printer",
+          "logics": ["libimage_pipeline_dpl"],
+          "external_inputs": ["/image_pipeline/resize_dimension"],
+          "output_objpools": ["/pipeline_result"]
+        }
+    ]
+}

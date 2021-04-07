@@ -364,7 +364,7 @@ public:
 #ifdef EVALUATION
             uint64_t after_inference_ns = get_time();
 #endif
-            PersistentCascadeStoreWithStringKey::ObjectType obj(frame->key,name.c_str(),name.size());
+            VolatileCascadeStoreWithStringKey::ObjectType obj(frame->key,name.c_str(),name.size());
             std::lock_guard<std::mutex> lock(p2p_send_mutex);
 #ifdef EVALUATION
             CloseLoopReport clr;
@@ -372,7 +372,7 @@ public:
             clr.photo_id = fd->photo_id;
             clr.inference_us = (after_inference_ns-before_inference_ns)/1000;
 #endif
-            auto result = ctxt->get_service_client_ref().template put<PersistentCascadeStoreWithStringKey>(obj);
+            auto result = ctxt->get_service_client_ref().template put<VolatileCascadeStoreWithStringKey>(obj);
             for (auto& reply_future:result.get()) {
                 auto reply = reply_future.second.get();
                 dbg_default_debug("node({}) replied with version:({:x},{}us)",reply_future.first,std::get<0>(reply),std::get<1>(reply));

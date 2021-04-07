@@ -4,6 +4,7 @@
 #include <variant>
 #include <derecho/core/derecho.hpp>
 #include <chrono>
+#include "../service_types.hpp"
 
 using namespace std::chrono_literals;
 
@@ -333,6 +334,34 @@ node_id_t ServiceClient<CascadeTypes...>::pick_member_by_policy(uint32_t subgrou
     return node_id;
 }
 
+// template <typename... CascadeTypes>
+// uint32_t ServiceClient<CascadeTypes...>::pick_shard_by_policy(ObjectPoolMetadata object_pool_metadata, uint32_t sh_idx, bool retry) {
+//     if (object_pool_metadata.sharding_policy_index == static_cast<int>(ShardMemberSelectionPolicy::UserSpecified)) {
+//         return sh_idx;
+//     }
+//     uint32_t shard_index = sh_idx;
+//     uint32_t num_shards = this->get_number_of_shards(object_pool_metadata.subgroup_index);
+//     switch(object_pool_metadata.sharding_policy_index) {
+//     case static_cast<int>(ShardMemberSelectionPolicy::FirstMember):
+//         shard_index = 0;
+//         break;
+//     case static_cast<int>(ShardMemberSelectionPolicy::LastMember):
+//         shard_index = num_shards - 1;
+//         break;
+//     case static_cast<int>(ShardMemberSelectionPolicy::Random):
+//         shard_index = get_time()%num_shards; // use time as random source.
+//         break;
+//     case static_cast<int>(ShardMemberSelectionPolicy::FixedRandom):
+//         if (shard_index == -1 || retry) {
+//             shard_index = get_time()%num_shards; // use time as random source.
+//         }
+//         break;
+//     default:
+//         throw new derecho::derecho_exception("Unknown subgroup member selection policy:" + std::to_string(object_pool_metadata.sharding_policy_index));
+//     }
+//     return shard_index;
+// }
+
 template <typename... CascadeTypes>
 template <typename SubgroupType>
 derecho::rpc::QueryResults<std::tuple<persistent::version_t,uint64_t>> ServiceClient<CascadeTypes...>::put(
@@ -552,6 +581,45 @@ derecho::rpc::QueryResults<std::vector<typename SubgroupType::KeyType>> ServiceC
         return caller.template p2p_send<RPC_NAME(list_keys_by_time)>(node_id,ts_us);
     }
 }
+
+// Metadata pool
+// template <typename... CascadeTypes>
+// derecho::rpc::QueryResults<uint64_t> ServiceClient<CascadeTypes...>::create_object_pool(std::string& object_pool_id,
+//         std::string& subgroup_type, uint32_t subgroup_index, int sharding_policy) {
+//     ObjectPoolMetadata object_pool_metadata(object_pool_id, subgroup_type, subgroup_index, sharding_policy);
+//     std::unique_lock wlck(this->object_pool_cache_mutex);
+//     object_pool_cache[object_pool_id] = object_pool_metadata;
+//     wlck.unlock();
+//     return this->put<VolatileCascadeMetadataWithStringKey>(object_pool_metadata);
+// }
+
+// template <typename... CascadeTypes>
+// derecho::rpc::QueryResults<uint64_t> ServiceClient<CascadeTypes...>::remove_object_pool(std::string& object_pool_id, uint32_t sg_idx, uint32_t sh_idx) {
+//     std::shared_lock rlck(this->object_pool_info_cache_mutex);
+//     if (object_pool_cache.find(object_pool_id) != object_pool_cache.end()) {
+//         rlck.unlock();
+//         std::unique_lock wlck(this->object_pool_cache_mutex);
+//         object_pool_info_cache.erase (object_pool_id);
+//     } 
+//     return this->remove(object_pool_id, sg_idx, sh_idx);
+// }
+
+// template <typename... CascadeTypes>
+// derecho::rpc::QueryResults<ObjectPoolMetadata> ServiceClient<CascadeTypes...>::find_object_pool(std::string& object_pool_id, uint32_t sg_idx, uint32_t sh_idx) {
+//     std::shared_lock rlck(this->object_pool_cache_mutex);
+//     if (object_pool_cache.find(object_pool_id) != object_pool_cache.end()) {
+//         ObjectPoolMetadata object_pool_metadata = object_pool_cache.at(object_pool_id);
+//         return object_pool_metadata;
+//     } 
+//     auto result = this->get<VolatileCascadeMetadataWithStringKey>(object_pool_id, persistent::INVALID_VERSION, sg_idx, sh_idx);
+//     for (auto& reply_future:result.get()) {
+//         auto reply = reply_future.second.get();
+//         std::unique_lock wlck(this->object_pool_cache_mutex);
+//         object_pool_cache[object_pool_id] = reply;
+//         return reply;
+//     }
+//     return ObjectPoolMetadata();
+// }
 
 template <typename... CascadeTypes>
 CascadeContext<CascadeTypes...>::CascadeContext() {

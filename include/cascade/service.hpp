@@ -17,10 +17,9 @@
 #include <derecho/conf/conf.hpp>
 #include "cascade.hpp"
 #include "data_path_logic_manager.hpp"
+#include "object.hpp"
 
 using json = nlohmann::json;
-
-using json = nlohmann::json; 
 
 /**
  * The cascade service templates
@@ -277,7 +276,7 @@ namespace cascade {
         InvalidPolicy = -1
     };
     #define DEFAULT_SHARD_MEMBER_SELECTION_POLICY (ShardMemberSelectionPolicy::FirstMember)
-    
+
     template <typename T> struct do_hash {};
     
     template <> struct do_hash<std::tuple<std::type_index,uint32_t,uint32_t>> {
@@ -319,7 +318,7 @@ namespace cascade {
             std::vector<node_id_t>,
             do_hash<std::tuple<std::type_index,uint32_t,uint32_t>>> member_cache;
         mutable std::shared_mutex member_cache_mutex;
-    
+
         /**
          * Pick a member by a given a policy.
          * @param subgroup_index
@@ -338,6 +337,14 @@ namespace cascade {
          */
         template <typename SubgroupType>
         void refresh_member_cache_entry(uint32_t subgroup_index, uint32_t shard_index);
+
+        // Metadata Pool
+        // std::unordered_map<std::string, ObjectPoolMetadata, std::hash<std::string>> object_pool_cache;
+        // mutable std::shared_mutex object_pool_cache_mutex;
+        // uint32_t pick_shard_by_policy(ObjectPoolMetadata object_pool_metadata, uint32_t sh_idx=0, bool retry=false);
+        // template <typename SubgroupType>
+        // void refresh_object_pool_cache_entry(uint32_t subgroup_index, uint32_t shard_index);
+
     public:
         /**
          * The Constructor
@@ -513,6 +520,12 @@ namespace cascade {
         template <typename SubgroupType>
         derecho::rpc::QueryResults<std::vector<typename SubgroupType::KeyType>> list_keys_by_time(const uint64_t& ts_us,
                 uint32_t subgroup_index=0, uint32_t shard_index=0);
+
+        // Metadata Pool
+        // derecho::rpc::QueryResults<uint64_t> create_object_pool(std::string& object_pool_id,
+        //         std::string& subgroup_type, uint32_t subgroup_index=0, int sharding_policy=0);
+        // derecho::rpc::QueryResults<uint64_t> remove_object_pool(std::string& object_pool_id, uint32_t sg_idx, uint32_t sh_idx);
+        // derecho::rpc::QueryResults<ObjectPoolMetadata> find_object_pool(std::string& object_pool_id, uint32_t sg_idx, uint32_t sh_idx);
     };
     
     
@@ -523,7 +536,7 @@ namespace cascade {
     #define CASCADE_CONTEXT_CPU_CORES           "CASCADE/cpu_cores"
     #define CASCADE_CONTEXT_GPUS                "CASCADE/gpus"
     #define CASCADE_CONTEXT_WORKER_CPU_AFFINITY "CASCADE/worker_cpu_affinity"
-    
+
     /**
      * A class describing the resources available in the Cascade context.
      */
@@ -542,7 +555,60 @@ namespace cascade {
         /** dump **/
         void dump() const;
     };
-   
+
+
+    /**
+     * configuration keys
+     */
+    #define DFG_CONFIG              "dfg.json"
+    #define DFG_ID                  "dfg_id"
+    #define DFG_NUM_NODES           "num_nodes"
+    #define DFG_LAYOUT              "layout"
+
+    /**
+     * A class describing a DFG.
+     */
+    class DFGDescriptor {
+    public:
+        int dfg_id;
+        /** number of nodes defined in the DFG **/
+        uint32_t num_nodes;
+        /** A struct that defines a DFG node **/
+        struct DFGNode {
+            std::string object_pool_id;
+            std::vector<std::string> dlls;
+            std::vector<std::string> external_inputs;
+            std::vector<std::string> output_objpools;
+
+            inline std::string to_string() {
+                std::ostringstream out;
+                out << "DFGNode{object_pool_id: " << object_pool_id << ", dlls:[";
+                for (std::string& dll: dlls) {
+                    out << dll << ",";
+                }
+                out << "], external_inputs:[";
+                for (std::string& external_input: external_inputs) {
+                    out << external_input << ",";
+                }
+                out << "], output_objpools:[";
+                for (std::string& output_objpool: output_objpools) {
+                    out << output_objpool << ",";
+                }
+                out << "]";
+                return out.str();
+            }
+        };
+        std::vector<DFGNode> nodes;
+        /** default constructor **/
+        DFGDescriptor();
+        /** constructor **/
+        DFGDescriptor(const json& dfg_conf);
+        /** destructor **/
+        virtual ~DFGDescriptor();
+        /** dump **/
+        void dump() const;
+    };
+
 
     /**
      * The cascade context

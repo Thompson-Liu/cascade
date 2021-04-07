@@ -221,8 +221,8 @@ public:
     ObjectWithStringKey();
 
     virtual const std::string& get_key_ref() const override;
-    virtual bool is_null() const override;
     virtual bool is_valid() const override;
+    virtual bool is_null() const override;
     virtual void set_version(persistent::version_t ver) const override;
     virtual persistent::version_t get_version() const override;
     virtual void set_timestamp(uint64_t ts_us) const override;
@@ -253,6 +253,65 @@ std::enable_if_t<std::disjunction<std::is_same<ObjectWithStringKey,VT>,std::is_s
     return VT(key,Blob{});
 }
 **/
+
+#define INVALID_OBJECT_POOL_ID ("INVALID")
+
+class ObjectPoolMetadata :  public mutils::ByteRepresentable,
+                            public ICascadeObject<std::string>,
+                            public IKeepTimestamp {
+public:
+    mutable uint64_t                                    timestamp_us;           // timestamp in microsecond
+    mutable std::string                                 object_pool_id;         // the identifier of the object pool
+    mutable std::string                                 subgroup_type;          // the subgroup type of the object pool
+    mutable uint32_t                                    subgroup_index;         // the subgroup shard of the object pool
+    mutable int                                         sharding_policy_index;  // index of shard member selection policy, default 0 
+
+    // bool operator==(const ObjectPoolMetadata& other);
+
+    // constructor 0 : copy constructor
+    ObjectPoolMetadata(const std::string& _object_pool_id, const std::string& _subgroup_type, const uint32_t _subgroup_index);
+
+    // constructor 0.5 : copy constructor
+    ObjectPoolMetadata(const std::string& _object_pool_id,
+                       const std::string& _subgroup_type,
+                       const uint32_t _subgroup_index,
+                       const int _sharding_policy_index);
+
+    // constructor 1 : copy consotructor
+     ObjectPoolMetadata(const uint64_t _timestamp_us,
+                       const std::string& _object_pool_id, 
+                       const std::string& _subgroup_type,
+                       const uint32_t _subgroup_index,
+                       const int _sharding_policy_index);
+
+    // constructor 2 : move constructor
+    ObjectPoolMetadata (ObjectPoolMetadata&& other);
+
+    // constructor 3 : copy constructor
+    ObjectPoolMetadata (const ObjectPoolMetadata& other);
+
+    // constructor 4 : default invalid constructor
+    ObjectPoolMetadata();
+
+    virtual const std::string& get_key_ref() const override;
+    virtual bool is_null() const override;
+    virtual bool is_valid() const override;
+    virtual void set_timestamp(uint64_t ts_us) const override;
+    virtual uint64_t get_timestamp() const override;
+
+    DEFAULT_SERIALIZATION_SUPPORT(ObjectPoolMetadata, timestamp_us, object_pool_id, subgroup_type, subgroup_index, sharding_policy_index);
+
+    // IK and IV for object pool metadata
+    static std::string IK;
+    static ObjectPoolMetadata IV;
+};
+
+inline std::ostream& operator<<(std::ostream& out, const ObjectPoolMetadata& o) {
+    out << "ObjectPoolMetadata{object pool id:" << o.object_pool_id
+        << ", object pool info: subgroup type" << o.subgroup_type
+        << ", subgroup index: " << std::to_string(o.subgroup_index) << "}";
+    return out;
+}
 
 } // namespace cascade
 } // namespace derecho

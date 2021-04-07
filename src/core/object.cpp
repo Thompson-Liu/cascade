@@ -7,6 +7,9 @@ uint64_t ObjectWithUInt64Key::IK = INVALID_UINT64_OBJECT_KEY;
 ObjectWithUInt64Key ObjectWithUInt64Key::IV;
 std::string ObjectWithStringKey::IK;
 ObjectWithStringKey ObjectWithStringKey::IV;
+std::string ObjectPoolMetadata::IK = INVALID_OBJECT_POOL_ID;
+ObjectPoolMetadata ObjectPoolMetadata::IV;
+
 
 Blob::Blob(const char* const b, const decltype(size) s) :
     bytes(nullptr), size(0), is_temporary(false) {
@@ -369,6 +372,87 @@ bool ObjectWithStringKey::verify_previous_version(persistent::version_t prev_ver
 template <>
 ObjectWithStringKey create_null_object_cb<std::string,ObjectWithStringKey,&ObjectWithStringKey::IK,&ObjectWithStringKey::IV>(const std::string& key) {
     return ObjectWithStringKey(key,Blob{});
+}
+
+// constructor 0 : copy constructor
+ObjectPoolMetadata::ObjectPoolMetadata(const std::string& _object_pool_id, 
+                                       const std::string& _subgroup_type, 
+                                       const uint32_t _subgroup_index):
+    timestamp_us(0),
+    subgroup_type(_subgroup_type),
+    subgroup_index(_subgroup_index),
+    sharding_policy_index(0) {}
+    
+// constructor 0.5 : copy constructor
+ObjectPoolMetadata::ObjectPoolMetadata(const std::string& _object_pool_id,
+                                       const std::string& _subgroup_type,
+                                       const uint32_t _subgroup_index,
+                                       const int _sharding_policy_index): 
+    timestamp_us(0),
+    object_pool_id(_object_pool_id),
+    subgroup_type(_subgroup_type),
+    subgroup_index(_subgroup_index),
+    sharding_policy_index(_sharding_policy_index) {}
+
+// constructor 1 : copy consotructor
+ObjectPoolMetadata::ObjectPoolMetadata(const uint64_t _timestamp_us,
+                                       const std::string& _object_pool_id, 
+                                       const std::string& _subgroup_type,
+                                       const uint32_t _subgroup_index,
+                                       const int _sharding_policy_index):
+    timestamp_us(_timestamp_us),
+    object_pool_id(_object_pool_id), 
+    subgroup_type(_subgroup_type),
+    subgroup_index(_subgroup_index),
+    sharding_policy_index(_sharding_policy_index) {}
+
+// constructor 2 : move constructor
+ObjectPoolMetadata::ObjectPoolMetadata(ObjectPoolMetadata&& other) : 
+    timestamp_us(other.timestamp_us),
+    object_pool_id(other.object_pool_id),
+    subgroup_type(other.subgroup_type),
+    subgroup_index(other.subgroup_index),
+    sharding_policy_index(other.sharding_policy_index) {}
+
+// constructor 3 : copy constructor
+ObjectPoolMetadata::ObjectPoolMetadata(const ObjectPoolMetadata& other) : 
+    timestamp_us(other.timestamp_us),
+    object_pool_id(other.object_pool_id),
+    subgroup_type(other.subgroup_type),
+    subgroup_index(other.subgroup_index),
+    sharding_policy_index(other.sharding_policy_index) {}
+
+// constructor 4 : default invalid constructor
+ObjectPoolMetadata::ObjectPoolMetadata() : 
+    timestamp_us(0),
+    object_pool_id(INVALID_OBJECT_POOL_ID),
+    subgroup_type(""),
+    subgroup_index(0),
+    sharding_policy_index(0) {}
+
+const std::string& ObjectPoolMetadata::get_key_ref() const {
+    return this->object_pool_id;
+}
+
+bool ObjectPoolMetadata::is_null() const {
+    return (this->subgroup_type.size() == 0);
+}
+
+bool ObjectPoolMetadata::is_valid() const {
+    return object_pool_id.compare(INVALID_OBJECT_POOL_ID) != 0;
+}
+
+void ObjectPoolMetadata::set_timestamp(uint64_t ts_us) const {
+    this->timestamp_us = ts_us;
+}
+
+uint64_t ObjectPoolMetadata::get_timestamp() const {
+    return this->timestamp_us;
+}
+
+template <>
+ObjectPoolMetadata create_null_object_cb<std::string,ObjectPoolMetadata,&ObjectPoolMetadata::IK,&ObjectPoolMetadata::IV>(const std::string& object_pool_id) {
+    return ObjectPoolMetadata();
 }
 
 } // namespace cascade
