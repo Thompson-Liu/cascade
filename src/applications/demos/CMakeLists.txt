@@ -38,4 +38,13 @@ if (TENSORFLOW_LIB AND OPENCV_CORE_FOUND)
         ${CMAKE_CURRENT_BINARY_DIR}/demo_cfg/n4/run.sh 
         COMMENT "prepare demo aaplication configuration"
     )
+
+    add_executable(contour_detection_perf contour_detection_perf.cpp)
+    target_include_directories(contour_detection_perf PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${OpenCV_INCLUDE_DIRS}>
+    )
+    target_link_libraries(contour_detection_perf cascade ${OpenCV_LIBS})
 endif()

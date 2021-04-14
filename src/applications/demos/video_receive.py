@@ -5,6 +5,7 @@ import struct
 import sys
 import numpy as np
 import cascade_py
+import time
 
 capi = cascade_py.ServiceClientAPI()
 
@@ -35,13 +36,16 @@ def receive_frames_from_server(host_ip, port):
             frame_data = data[:msg_size]
             data = data[msg_size:]
             frame_packet = pickle.loads(frame_data)
-            source, idx = frame_packet['header']
+            ts,idx = frame_packet['header']
             image_frame = frame_packet['frame']
-            print(source)
-            print(idx)
 
             cascade_frame = image_frame.tobytes()
-            ret = capi.put('VCSS', '/demo/contour_detection/'+str(idx), cascade_frame, 0, 0)
+            # /demo/contour_detection/<idx>_<extract_ts_ns>_<put_ts_ns>
+            extract_ts = "{:.0f}".format(ts*(10**9))
+            invoke_put_ts = "{:.0f}".format(time.time()*(10**9))
+            frame_id = '/demo/contour_detection/'+str(idx)+'_'+extract_ts+'_'+invoke_put_ts
+            print(frame_id)
+            ret = capi.put('VCSS', frame_id, cascade_frame, 0, 0)
             print(ret.get_result())
         except Exception as e:
             print('exception occured: {}'.format(e))
