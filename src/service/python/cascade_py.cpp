@@ -16,6 +16,8 @@ namespace py = pybind11;
         ft <VolatileCascadeStoreWithStringKey>(__VA_ARGS__); \
     } else if ((x) == "PCSS") { \
         ft <PersistentCascadeStoreWithStringKey>(__VA_ARGS__); \
+    } else if ((x) == "TCSS") { \
+        ft <PersistentCascadeStoreWithStringKey>(__VA_ARGS__); \
     } else { \
         print_red("unknown subgroup type:" + x); \
     } \
