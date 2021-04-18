@@ -40,17 +40,13 @@ def receive_frames_from_server(host_ip, port):
             image_frame = frame_packet['frame']
 
             img = cv2.imdecode(image_frame, cv2.IMREAD_COLOR)
-            img = cv2.resize(img, (300,300))
-            _, image_frame = cv2.imencode('.jpg', img)
-            image_frame = image_frame / 255
-            image_frame = image_frame.astype(np.single)
-            # image_frame = image_frame[:,:,::-1]
+            img = cv2.resize(img, (352,240))
+            img = img / 255
+            img = img.astype(np.single)
+            cascade_frame = img.tobytes()
 
-            cascade_frame = image_frame.tobytes()
-            # /demo/contour_detection/<idx>_<extract_ts_ns>_<put_ts_ns>
             extract_ts = "{:.0f}".format(ts*(10**9))
-            invoke_put_ts = "{:.0f}".format(time.time()*(10**9))
-            frame_id = '/dairy_farm/compute/'+str(idx)+'_'+extract_ts+'_'+invoke_put_ts
+            frame_id = '/dairy_farm/compute/'+str(idx)+'_'+extract_ts
             print(frame_id)
             ret = capi.put('VCSS', frame_id, cascade_frame, 0, 0)
             print(ret.get_result())

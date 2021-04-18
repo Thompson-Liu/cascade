@@ -74,7 +74,7 @@ if (TENSORFLOW_LIB AND OPENCV_CORE_FOUND)
             $<BUILD_INTERFACE:${TENSORFLOW_LIB_INCLUDE_DIRS}>
             $<BUILD_INTERFACE:${OpenCV_INCLUDE_DIRS}>
         )
-        target_link_libraries(infer_dpl cascade ${TENSORFLOW_LIB} ${TORCH_LIBRARIES} ${OpenCV_LIBS})
+        target_link_libraries(infer_dpl cascade ${TENSORFLOW_LIB} ${TORCH_LIBRARIES} ${OpenCV_LIBS} ANN)
 
         add_custom_command(TARGET infer_dpl POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/bcs-inference-model.tar.gz
