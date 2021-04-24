@@ -18,7 +18,7 @@ std::string get_description() {
     return MY_DESC;
 }
 
-#define FILTER_THRESHOLD       (0.35)
+#define FILTER_THRESHOLD       (0.9)
 #define IMAGE_WIDTH            (352)
 #define IMAGE_HEIGHT           (240)
 #define FILTER_TENSOR_BUFFER_SIZE     (IMAGE_WIDTH*IMAGE_HEIGHT*3)
@@ -41,7 +41,7 @@ class DairyFarmFilterOCDPO: public OffCriticalDataPathObserver {
         const TriggerCascadeNoStoreWithStringKey::ObjectType *tcss_value = reinterpret_cast<const TriggerCascadeNoStoreWithStringKey::ObjectType *>(value_ptr);
         std::vector<float> tensor_buf(FILTER_TENSOR_BUFFER_SIZE);
         std::memcpy(static_cast<void*>(tensor_buf.data()),static_cast<const void*>(tcss_value->blob.bytes), tcss_value->blob.size);
-        cppflow::tensor input_tensor(tensor_buf, {IMAGE_WIDTH,IMAGE_HEIGHT,3});
+        cppflow::tensor input_tensor(std::move(tensor_buf), {IMAGE_WIDTH,IMAGE_HEIGHT,3});
         input_tensor = cppflow::expand_dims(input_tensor, 0);
         
         /* step 3: Predict */
@@ -62,9 +62,8 @@ class DairyFarmFilterOCDPO: public OffCriticalDataPathObserver {
                 // if true, use trigger put; otherwise, use normal put
                 if (iter->second) {
                     auto result = typed_ctxt->get_service_client_ref().template trigger_put<VolatileCascadeStoreWithStringKey>(obj);
-                    // for (auto& reply_future:result.get()) {
-                    //     dbg_default_debug("node({}) fulfilled the reply futures",reply_future.first);
-                    // }
+                    result.get();
+                    dbg_default_debug("finish put obj with key({})", obj_key);
                 } 
                 else {
                     auto result = typed_ctxt->get_service_client_ref().template put<VolatileCascadeStoreWithStringKey>(obj);

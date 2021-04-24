@@ -208,9 +208,8 @@ private:
             // if true, use trigger put; otherwise, use normal put
             if (iter->second) {
                 auto result = typed_ctxt->get_service_client_ref().template trigger_put<PersistentCascadeStoreWithStringKey>(obj);
-                // for (auto& reply_future:result.get()) {
-                //     dbg_default_debug("node({}) fulfilled the reply futures",reply_future.first);
-                // }
+                result.get();
+                dbg_default_debug("finish trigger put with key({})",obj_key);
             } 
             else {
                 auto result = typed_ctxt->get_service_client_ref().template put<PersistentCascadeStoreWithStringKey>(obj);
